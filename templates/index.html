@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyber Threat Intelligence Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white transition duration-300">
+
+  <div class="max-w-5xl mx-auto p-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-3xl font-bold">🔍 Cyber Threat Intelligence Dashboard</h1>
+      <button id="themeToggle" class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition">
+        Toggle Dark Mode
+      </button>
+    </div>
+
+    <!-- Form -->
+    <form method="post" class="flex gap-4 mb-6">
+      <input type="text" name="ip" placeholder="Enter IP address" required
+        class="flex-1 p-3 rounded border dark:border-gray-600 bg-white dark:bg-gray-800 focus:outline-none focus:ring focus:ring-indigo-500">
+      <button type="submit" class="px-4 py-2 rounded bg-indigo-600 text-white hover:bg-indigo-700 transition">
+        Check
+      </button>
+    </form>
+
+    {% if ip %}
+    <h2 class="text-xl font-semibold mb-4">Results for: <span class="text-indigo-500">{{ ip }}</span></h2>
+
+    {% if vt_result %}
+    <div class="bg-white dark:bg-gray-800 shadow rounded p-4 mb-6">
+      <h3 class="text-lg font-semibold mb-2">🛡️ VirusTotal Report</h3>
+      <pre class="bg-gray-100 dark:bg-gray-900 p-3 rounded overflow-x-auto text-sm">{{ vt_result }}</pre>
+    </div>
+    {% endif %}
+
+    {% if abuse_result %}
+    <div class="bg-white dark:bg-gray-800 shadow rounded p-4 mb-6">
+      <h3 class="text-lg font-semibold mb-2">🚨 AbuseIPDB Report</h3>
+      <pre class="bg-gray-100 dark:bg-gray-900 p-3 rounded overflow-x-auto text-sm">{{ abuse_result }}</pre>
+    </div>
+    {% endif %}
+
+    {% if vt_result %}
+    <div class="bg-white dark:bg-gray-800 shadow rounded p-4 mb-6">
+      <h3 class="text-lg font-semibold mb-4">📈 VirusTotal Threat Distribution</h3>
+      <div class="flex justify-center">
+        <canvas id="vtChart" width="300" height="300"></canvas>
+      </div>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    {% if scans %}
+    <div class="bg-white dark:bg-gray-800 shadow rounded p-4 mb-6">
+      <h3 class="text-lg font-semibold mb-4">📜 Recent Scan History</h3>
+      <ul class="space-y-2 text-sm">
+        {% for scan in scans %}
+        <li class="border-b border-gray-300 dark:border-gray-600 pb-2">
+          <strong>{{ scan.ip }}</strong> | VT Malicious: {{ scan.virus_total.malicious }} |
+          Abuse Score: {{ scan.abuse_ipdb.abuseConfidenceScore }} |
+          <em>{{ scan.timestamp }}</em>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 shadow rounded p-4 mb-6">
+      <h3 class="text-lg font-semibold mb-4">📊 AbuseIPDB Scores</h3>
+      <div class="w-full overflow-x-auto">
+        <canvas id="abuseChart" height="300"></canvas>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if ip and vt_result and abuse_result %}
+    <div class="text-center mt-10">
+      <form method="get" action="/report">
+        <input type="hidden" name="ip" value="{{ ip }}">
+        <input type="hidden" name="vt" value="{{ vt_result }}">
+        <input type="hidden" name="abuse" value="{{ abuse_result }}">
+        <button type="submit"
+          class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg transition">
+          📄 Download PDF Report
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Dark Mode Toggle Script -->
+  <script>
+    const themeToggle = document.getElementById('themeToggle');
+    const html = document.documentElement;
+
+    function updateToggleText() {
+      themeToggle.textContent = html.classList.contains('dark') ? 'Toggle Light Mode' : 'Toggle Dark Mode';
+    }
+
+    themeToggle.addEventListener('click', () => {
+      html.classList.toggle('dark');
+      updateToggleText();
+    });
+
+    // Set correct label on load
+    updateToggleText();
+  </script>
+
+  <!-- Charts -->
+  <script>
+    {% if vt_result %}
+    new Chart(document.getElementById('vtChart'), {
+      type: 'pie',
+      data: {
+        labels: ['Malicious', 'Suspicious', 'Undetected', 'Harmless', 'Timeout'],
+        datasets: [{
+          data: [
+            {{ vt_result.get('malicious', 0) }},
+        {{ vt_result.get('suspicious', 0) }},
+            {{ vt_result.get('undetected', 0) }},
+      {{ vt_result.get('harmless', 0) }},
+      {{ vt_result.get('timeout', 0) }}
+          ],
+      backgroundColor: ['#ef4444', '#f97316', '#a3a3a3', '#4ade80', '#60a5fa'],
+        }]
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false
+    }
+    });
+    {% endif %}
+
+    {% if scans %}
+    new Chart(document.getElementById('abuseChart'), {
+      type: 'bar',
+      data: {
+        labels: [{% for scan in scans %}'{{ scan.ip }}',{% endfor %}],
+      datasets: [{
+        label: 'Abuse Score',
+        data: [{% for scan in scans %}{{ scan.abuse_ipdb.abuseConfidenceScore }}, {% endfor %}],
+      backgroundColor: '#f87171'
+        }]
+      },
+      options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100
+        }
+      }
+    }
+    });
+    {% endif %}
+  </script>
+
+</body>
+
+</html>
