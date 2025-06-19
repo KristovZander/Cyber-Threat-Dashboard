@@ -19,7 +19,7 @@ Includes scan history, live threat charts, and PDF report exports.
 ## 📸 Screenshots
 
 ### Dashboard UI  
-![Dashboard](static/assets/dashboard_preview.png)
+![Dashboard](static/assets/Dashboard.png)
 
 ### PDF Report  
 ![PDF Report](static/assets/pdf_sample.png)
@@ -28,9 +28,28 @@ Includes scan history, live threat charts, and PDF report exports.
 
 ## 📦 Installation
 
+### 1. Clone the repository
+
 ```bash
 git clone https://github.com/yourusername/cyber-threat-dashboard.git
 cd cyber-threat-dashboard
+```
+
+### 2. Create and activate a virtual environment (recommended)
+
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
+
+# macOS/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+### 3. Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
@@ -41,9 +60,9 @@ pip install -r requirements.txt
 Create a `.env` file in the root:
 
 ```env
-MONGO_URI=mongodb+srv://...
-VT_API_KEY=your_virustotal_key
-ABUSE_API_KEY=your_abuseipdb_key
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/?retryWrites=true&w=majority
+VT_API_KEY=your_virustotal_api_key_here
+ABUSE_API_KEY=your_abuseipdb_api_key_here
 ```
 
 ---
@@ -113,8 +132,8 @@ cyber-threat-dashboard/
 ## 👨‍💻 Author
 
 **Himanshu Choubey**  
-GitHub: [@yourusername](https://github.com/yourusername)  
-Email: your@email.com
+GitHub: [@KristovZander](https://github.com/KristovZander)  
+Email: choubeyhimanshu719@gmail.com
 
 ---
 
